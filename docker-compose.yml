@@ -1,0 +1,44 @@
+volumes:
+  mysql_volume:
+    name: "mysql8"
+    external: true
+  php_volume:
+    name: php_volume
+    driver: local
+    driver_opts:
+      type: none
+      o: bind
+      device: ./var/www
+
+services:
+  mysql:
+    image: mysql:oraclelinux8
+    container_name: mysql8.3
+    hostname: mysql_host
+    restart: always
+    ports:
+      - "3306:3306"
+      - "3060:33060"
+    environment:
+      MYSQL_ROOT_PASSWORD: 123456
+    volumes:
+      - mysql_volume:/var/lib/mysql
+
+  php:
+    image: php:8.3.6-apache
+    container_name: php8.3.6
+    restart: always
+    ports:
+      - "80:80"
+    volumes:
+      - php_volume:/var/www/html:rw
+    command: >
+      bash -c "\
+      apt-get update && \
+      docker-php-ext-install mysqli pdo pdo_mysql && \
+      docker-php-ext-enable pdo_mysql && \
+      a2enmod rewrite && \
+      chmod -R 777 /var/www/html && \
+      apache2-foreground"
+    depends_on:
+      - mysql
